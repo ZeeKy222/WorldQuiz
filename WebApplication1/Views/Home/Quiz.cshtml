@@ -1,0 +1,89 @@
+@model WebApplication1.Models.QuizViewModel
+@{
+    ViewData["Title"] = $"{Model.Continent} Quiz";
+}
+
+<div class="quiz-page">
+    <div class="quiz-header">
+        <a class="quiz-back" data-i18n="chooseAnotherMode" asp-action="Hello">← Choose another mode</a>
+        <span class="quiz-continent js-continent" data-continent="@Model.Continent">@Model.Continent</span>
+        <span id="question-counter" data-question-count="@Model.Questions.Count">Question 1 of @Model.Questions.Count</span>
+    </div>
+
+    <form asp-action="Quiz" method="post" id="quiz-form" class="quiz-card">
+        @for (var index = 0; index < Model.Questions.Count; index++)
+        {
+            var question = Model.Questions[index];
+            <section class="question-step @(index == 0 ? "active" : "")" data-question="@index">
+                <h1 data-i18n="flagQuestion">Which country does this flag belong to?</h1>
+                <img class="flag-image" src="@question.FlagUrl" alt="Flag for question @(index + 1)" />
+                <div class="answer-grid">
+                    @foreach (var option in question.Options)
+                    {
+                        <label class="answer-option">
+                            <input type="radio" name="Answers[@index]" value="@option.Id" />
+                            <span class="country-name" data-country-code="@option.Code">@option.Name</span>
+                        </label>
+                    }
+                </div>
+            </section>
+        }
+
+        <div class="quiz-navigation">
+            <button type="button" class="btn previous-question" id="previous-question" data-i18n="previousQuestion" disabled>Previous question</button>
+            <button type="button" class="btn next-question" id="next-question" data-i18n="nextQuestion">Next question</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+        const steps = [...document.querySelectorAll('.question-step')];
+        const previousButton = document.getElementById('previous-question');
+        const nextButton = document.getElementById('next-question');
+        const counter = document.getElementById('question-counter');
+        const form = document.getElementById('quiz-form');
+        let currentStep = 0;
+
+        function updateNavigation() {
+            previousButton.disabled = currentStep === 0;
+            nextButton.textContent = currentStep === steps.length - 1
+                ? window.worldQuizTranslate('showResult')
+                : window.worldQuizTranslate('nextQuestion');
+            counter.textContent = window.worldQuizTranslate('questionCounter', {
+                current: currentStep + 1,
+                total: steps.length
+            });
+        }
+
+        updateNavigation();
+
+        previousButton.addEventListener('click', () => {
+            steps[currentStep].classList.remove('active');
+            currentStep--;
+            steps[currentStep].classList.add('active');
+            updateNavigation();
+        });
+
+        nextButton.addEventListener('click', () => {
+            const selected = steps[currentStep].querySelector('input:checked');
+            if (!selected) {
+                steps[currentStep].classList.add('needs-answer');
+                return;
+            }
+
+            steps[currentStep].classList.remove('needs-answer');
+            if (currentStep === steps.length - 1) {
+                form.submit();
+                return;
+            }
+
+            steps[currentStep].classList.remove('active');
+            currentStep++;
+            steps[currentStep].classList.add('active');
+            updateNavigation();
+        });
+        });
+    </script>
+}

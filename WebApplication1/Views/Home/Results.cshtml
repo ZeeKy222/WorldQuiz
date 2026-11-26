@@ -1,0 +1,72 @@
+@model WebApplication1.Models.QuizResultsViewModel
+@{
+    ViewData["Title"] = "Quiz Results";
+}
+
+<div class="results-page @(Model.SuccessRate == 100 ? "perfect-score" : "")">
+    <h1 class="page-title" data-i18n="yourResults">Your results</h1>
+    <p class="results-subtitle"><span class="results-continent js-continent" data-continent="@Model.Continent">@Model.Continent</span> <span data-i18n="flagQuiz">flag quiz</span></p>
+
+    @if (Model.SuccessRate == 100)
+    {
+        <div class="perfect-message" data-i18n="perfectScore">Perfect score!</div>
+        <div class="confetti" id="confetti" aria-hidden="true"></div>
+        <script>
+            const confettiContainer = document.getElementById('confetti');
+            const confettiColors = ['#ff3b30', '#ffcc00', '#34c759', '#007aff', '#af52de', '#ff2d55', '#00c7be', '#ff9500'];
+
+            let colorIndex = 0;
+            const rainInterval = window.setInterval(() => {
+                for (let count = 0; count < 4; count++) {
+                    const piece = document.createElement('span');
+                    const duration = 3.5 + Math.random() * 1.5;
+                    piece.style.setProperty('--x', `${Math.random() * 100}%`);
+                    piece.style.setProperty('--drift', `${Math.round((Math.random() - 0.5) * 260)}px`);
+                    piece.style.setProperty('--duration', `${duration}s`);
+                    piece.style.setProperty('--color', confettiColors[colorIndex % confettiColors.length]);
+                    colorIndex++;
+                    confettiContainer.appendChild(piece);
+                    window.setTimeout(() => piece.remove(), duration * 1000 + 100);
+                }
+            }, 60);
+
+            window.setTimeout(() => window.clearInterval(rainInterval), 5000);
+            window.setTimeout(() => confettiContainer.remove(), 10500);
+        </script>
+    }
+
+    <div class="results-board">
+        <div class="score-card">
+            <div class="score-number">@Model.SuccessRate%</div>
+            <div class="score-label" data-i18n="successRate">success rate</div>
+            <div class="score-count" data-i18n-template="scoreCount" data-correct="@Model.CorrectCount" data-total="@Model.TotalCount">@Model.CorrectCount of @Model.TotalCount correct</div>
+        </div>
+
+        <div class="result-list">
+            @foreach (var question in Model.Questions)
+            {
+                <div class="result-item @(question.IsCorrect ? "correct" : "incorrect")">
+                    <img src="@question.FlagUrl" alt="Flag for question @question.Number" />
+                    <div class="result-details">
+                        <strong data-i18n-template="question" data-number="@question.Number">Question @question.Number</strong>
+                        @if (question.IsCorrect)
+                        {
+                            <span><span data-i18n="youChose">You chose</span> <span class="country-name" data-country-code="@question.CorrectAnswerCode">@question.CorrectAnswer</span> <span data-i18n="correctSuffix">— correct!</span></span>
+                        }
+                        else
+                        {
+                            <span><span data-i18n="yourAnswerLabel">Your answer:</span> <span class="country-name" data-country-code="@question.SelectedAnswerCode">@(question.SelectedAnswer ?? "No answer")</span></span>
+                            <span><span data-i18n="correctAnswerLabel">Correct answer:</span> <span class="country-name" data-country-code="@question.CorrectAnswerCode">@question.CorrectAnswer</span></span>
+                        }
+                    </div>
+                    <div class="result-icon">@(question.IsCorrect ? "✓" : "✕")</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="results-actions">
+        <a class="btn start-btn" data-i18n="tryAgain" asp-action="Quiz" asp-route-continent="@Model.Continent">Try again</a>
+        <a class="btn choose-continent-btn" data-i18n="chooseAnotherMode" asp-action="Hello">Choose another mode</a>
+    </div>
+</div>
